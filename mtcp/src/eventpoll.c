@@ -127,7 +127,7 @@ mtcp_epoll_create(mctx_t mctx, int size)
 		return -1;
 	}
 
-	TRACE_EPOLL("epoll structure of size %d created.\n", ep->size);
+	TRACE_EPOLL("epoll structure of size %d created.\n", size);
 
 	mtcp->ep = ep;
 	epsocket->ep = ep;
@@ -386,12 +386,14 @@ wait:
 			struct timespec deadline;
 
 			clock_gettime(CLOCK_REALTIME, &deadline);
-			if (timeout > 1000) {
+			if (timeout >= 1000) {
 				int sec;
 				sec = timeout / 1000;
 				deadline.tv_sec += sec;
 				timeout -= sec * 1000;
 			}
+
+			deadline.tv_nsec += timeout * 1000000;
 
 			if (deadline.tv_nsec >= 1000000000) {
 				deadline.tv_sec++;

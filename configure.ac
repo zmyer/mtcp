@@ -2,7 +2,7 @@
 # Process this file with autoconf to produce a configure script.
 
 AC_PREREQ([2.69])
-AC_INIT([mtcp], [3], [mtcp@list.ndsl.kaist.edu])
+AC_INIT([mtcp], [3], [mtcp-user@list.ndsl.kaist.edu])
 AC_CONFIG_SRCDIR([mtcp/src/eventpoll.c])
 AC_CONFIG_HEADERS([config.h])
 
@@ -43,17 +43,41 @@ AC_CHECK_FUNCS([bzero clock_gettime getpagesize gettimeofday memmove memset munm
 
 # Reset DPDK to 0
 AC_SUBST(DPDK, 0)
+# Reset DPDK's LRO to 0
+AC_SUBST(LRO, 0)
 # Reset PSIO to 0
 AC_SUBST(PSIO, 0)
 # Reset NETMAP to 0
 AC_SUBST(NETMAP, 0)
+# Reset HWCSUM to 1
+AC_SUBST(HWCSUM, 1)
 
-# Check dpdk-1.8.0 path (lib & inc)
-AC_ARG_WITH(stuff, [  --with-dpdk-lib      path to the dpdk-2.2.0 install root])
+# Check dpdk-16.11 path (lib & inc)
+AC_ARG_WITH(stuff, [  --with-dpdk-lib      path to the dpdk-16.11 install root])
 if test "$with_dpdk_lib" != ""
 then
         AC_SUBST(DPDKLIBPATH, $with_dpdk_lib)
 	AC_SUBST(DPDK, 1)
+fi
+dnl Example of default-disabled feature
+AC_ARG_ENABLE([lro],
+	AS_HELP_STRING([--enable-lro], [Enable dpdk lro (for relevant NICs)]))
+
+if test "$with_dpdk_lib" != ""
+then
+	if test "x$enable_lro" = "xyes"
+	then
+		AC_SUBST(LRO, 1)
+	fi
+fi
+
+dnl Example of default-enabled feature
+AC_ARG_ENABLE([hwcsum],
+	AS_HELP_STRING([--disable-hwcsum], [Disable h/w-based checksum offloading (for relevant NICs)]))
+
+if test "x$enable_hwcsum" = "xno"
+then
+	AC_SUBST(HWCSUM, 0)
 fi
 
 # Check psio path (lib & inc)
@@ -66,7 +90,7 @@ fi
 
 dnl Example of default-disabled feature
 AC_ARG_ENABLE([netmap],
-	AS_HELP_STRING([--enable-netmap], [Enable netmap module (EXPERIMENTAL)]))
+	AS_HELP_STRING([--enable-netmap], [Enable netmap module]))
 
 AS_IF([test "x$enable_netmap" = "xyes"], [
 	    AC_SUBST(NETMAP, 1)

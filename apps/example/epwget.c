@@ -483,7 +483,7 @@ PrintStats()
 				"completes: %7lu (resp_time avg: %4lu, max: %6lu us), "
 				"errors: %2lu (timedout: %2lu)\n", 
 				i, st->waits, st->events, st->connects, 
-				st->reads / 1000 / 1000, st->writes / 1000 / 1000, 
+				st->reads / 1024 / 1024, st->writes / 1024 / 1024, 
 				st->completes, avg_resp_time, st->max_resp_time, 
 				st->errors, st->timedout);
 #endif
@@ -505,7 +505,7 @@ PrintStats()
 	fprintf(stderr, "[ ALL ] connect: %7lu, read: %4lu MB, write: %4lu MB, "
 			"completes: %7lu (resp_time avg: %4lu, max: %6lu us)\n", 
 			total.connects, 
-			total.reads / 1000 / 1000, total.writes / 1000 / 1000, 
+			total.reads / 1024 / 1024, total.writes / 1024 / 1024, 
 			total.completes, total_resp_time / core_limit, total.max_resp_time);
 #if 0
 	fprintf(stderr, "[ ALL ] epoll_wait: %5lu, event: %7lu, "
@@ -513,7 +513,7 @@ PrintStats()
 			"completes: %7lu (resp_time avg: %4lu, max: %6lu us), "
 			"errors: %2lu (timedout: %2lu)\n", 
 			total.waits, total.events, total.connects, 
-			total.reads / 1000 / 1000, total.writes / 1000 / 1000, 
+			total.reads / 1024 / 1024, total.writes / 1024 / 1024, 
 			total.completes, total_resp_time / core_limit, total.max_resp_time, 
 			total.errors, total.timedout);
 #endif
@@ -534,7 +534,7 @@ RunWgetMain(void *arg)
 	int i;
 
 	struct timeval cur_tv, prev_tv;
-	uint64_t cur_ts, prev_ts;
+	//uint64_t cur_ts, prev_ts;
 
 	mtcp_core_affinitize(core);
 
@@ -587,12 +587,12 @@ RunWgetMain(void *arg)
 	ctx->errors = ctx->incompletes = 0;
 
 	gettimeofday(&cur_tv, NULL);
-	prev_ts = TIMEVAL_TO_USEC(cur_tv);
+	//prev_ts = TIMEVAL_TO_USEC(cur_tv);
 	prev_tv = cur_tv;
 
 	while (!done[core]) {
 		gettimeofday(&cur_tv, NULL);
-		cur_ts = TIMEVAL_TO_USEC(cur_tv);
+		//cur_ts = TIMEVAL_TO_USEC(cur_tv);
 
 		/* print statistics every second */
 		if (core == 0 && cur_tv.tv_sec > prev_tv.tv_sec) {

@@ -143,6 +143,7 @@ SendTCPPacketStandalone(struct mtcp_manager *mtcp,
 	uint8_t *tcpopt;
 	uint32_t *ts;
 	uint16_t optlen;
+	int rc = -1;
 
 	optlen = CalculateOptionLength(flags);
 	if (payloadlen > TCP_DEFAULT_MSS + optlen) {
@@ -192,11 +193,21 @@ SendTCPPacketStandalone(struct mtcp_manager *mtcp,
 	// copy payload if exist
 	if (payloadlen > 0) {
 		memcpy((uint8_t *)tcph + TCP_HEADER_LEN + optlen, payload, payloadlen);
+#if defined(NETSTAT) && defined(ENABLELRO)
+		mtcp->nstat.tx_gdptbytes += payloadlen;
+#endif /* NETSTAT */
 	}
-
+		
 #if TCP_CALCULATE_CHECKSUM
-	tcph->check = TCPCalcChecksum((uint16_t *)tcph, 
-			TCP_HEADER_LEN + optlen + payloadlen, saddr, daddr);
+#ifndef DISABLE_HWCSUM
+	if (mtcp->iom->dev_ioctl != NULL)
+		rc = mtcp->iom->dev_ioctl(mtcp->ctx, GetOutputInterface(daddr),
+					  PKT_TX_TCPIP_CSUM, NULL);
+#endif
+	if (rc == -1)
+		tcph->check = TCPCalcChecksum((uint16_t *)tcph, 
+					      TCP_HEADER_LEN + optlen + payloadlen,
+					      saddr, daddr);
 #endif
 
 	if (tcph->syn || tcph->fin) {
@@ -214,6 +225,7 @@ SendTCPPacket(struct mtcp_manager *mtcp, tcp_stream *cur_stream,
 	uint16_t optlen;
 	uint8_t wscale = 0;
 	uint32_t window32 = 0;
+	int rc = -1;
 
 	optlen = CalculateOptionLength(flags);
 	if (payloadlen > cur_stream->sndvar->mss + optlen) {
@@ -300,14 +312,23 @@ SendTCPPacket(struct mtcp_manager *mtcp, tcp_stream *cur_stream,
 	// copy payload if exist
 	if (payloadlen > 0) {
 		memcpy((uint8_t *)tcph + TCP_HEADER_LEN + optlen, payload, payloadlen);
+#if defined(NETSTAT) && defined(ENABLELRO)
+		mtcp->nstat.tx_gdptbytes += payloadlen;
+#endif /* NETSTAT */
 	}
 
 #if TCP_CALCULATE_CHECKSUM
-	tcph->check = TCPCalcChecksum((uint16_t *)tcph, 
-			TCP_HEADER_LEN + optlen + payloadlen, 
-			cur_stream->saddr, cur_stream->daddr);
+#ifndef DISABLE_HWCSUM
+	if (mtcp->iom->dev_ioctl != NULL)
+		rc = mtcp->iom->dev_ioctl(mtcp->ctx, cur_stream->sndvar->nif_out,
+					  PKT_TX_TCPIP_CSUM, NULL);
 #endif
-
+	if (rc == -1)
+		tcph->check = TCPCalcChecksum((uint16_t *)tcph, 
+					      TCP_HEADER_LEN + optlen + payloadlen, 
+					      cur_stream->saddr, cur_stream->daddr);
+#endif
+	
 	cur_stream->snd_nxt += payloadlen;
 
 	if (tcph->syn || tcph->fin) {
@@ -328,7 +349,7 @@ SendTCPPacket(struct mtcp_manager *mtcp, tcp_stream *cur_stream,
 				cur_ts, cur_stream->sndvar->rto, cur_stream->sndvar->ts_rto);
 		AddtoRTOList(mtcp, cur_stream);
 	}
-
+		
 	return payloadlen;
 }
 /*----------------------------------------------------------------------------*/

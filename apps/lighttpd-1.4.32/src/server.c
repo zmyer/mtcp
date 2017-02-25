@@ -1196,7 +1196,7 @@ show_help(void) {
 " -f <name>  filename of the config-file\n" \
 " -m <name>  module directory (default: "LIBRARY_DIR")\n" \
 " -p         print the parsed config-file in internal form, and exit\n" \
-" -c <#cpus> number of cpu cores that lighttpd will use\n" \
+" -n <#cpus> number of cpu cores that lighttpd will use\n" \
 " -t         test the config-file, and exit\n" \
 " -D         don't go to background (default: go to background)\n" \
 " -v         show version\n" \
@@ -1905,6 +1905,7 @@ main(int argc, char **argv) {
 
 	/* This part of code is only executed in the single-process, single-threaded version (non-mtcp/non-multithreaded) */
 	/* Under USE_MTCP settings, each individual `running_thread' executes the `main-loop' */
+	/* In USE_MTCP settings main thread will execute the flowing step */
 	/* main-loop */
 	while (!srv_shutdown) {
 		int n;
